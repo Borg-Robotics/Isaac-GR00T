@@ -1,0 +1,24 @@
+# Run with:
+# docker compose -f docker/compose.yaml up --build
+# Enter the container with:
+# docker exec -it isaac_groot bash
+services:
+  isaac_groot:
+    image: isaac_groot
+    container_name: isaac_groot
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    network_mode: host
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    entrypoint: bash
+    stdin_open: true
+    tty: true
