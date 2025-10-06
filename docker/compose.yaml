@@ -1,15 +1,19 @@
 # Run with:
 # docker compose -f docker/compose.yaml up --build
 # Enter the container with:
-# docker exec -it isaac_groot bash
+# docker exec -it borg-isaac-gr00t bash
 services:
-  isaac_groot:
-    image: isaac_groot
-    container_name: isaac_groot
+  borg-isaac-gr00t:
+    image: borg-isaac-gr00t
+    container_name: borg-isaac-gr00t
     build:
       context: ../
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/base.Dockerfile
+    runtime: nvidia
     network_mode: host
+
+    volumes:
+      - ../:/workspace
 
     deploy:
       resources:
@@ -17,7 +21,11 @@ services:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [gpu]
+              capabilities:
+              - gpu
+              - utility
+              - compute
+              - video 
 
     entrypoint: bash
     stdin_open: true
