@@ -671,77 +671,36 @@ class LeRobotSingleDataset(Dataset):
         key: str,
         base_index: int,
     ) -> np.ndarray:
-        # Step indices
+        """Get the video frames for a trajectory by a base index.
+
+        Args:
+            dataset (BaseSingleDataset): The dataset to retrieve the data from.
+            trajectory_id (str): The ID of the trajectory.
+            key (str): The key of the video.
+            base_index (int): The base index of the trajectory.
+
+        Returns:
+            np.ndarray: The video frames for the trajectory and frame indices. Shape: (T, H, W, C)
+        """
+        # Get the step indices
         step_indices = self.delta_indices[key] + base_index
-        traj_idx = self.get_trajectory_index(trajectory_id)
+        # print(f"{step_indices=}")
+        # Get the trajectory index
+        trajectory_index = self.get_trajectory_index(trajectory_id)
+        # Ensure the indices are within the valid range
+        # This is equivalent to padding the video with extra frames at the beginning and end
         step_indices = np.maximum(step_indices, 0)
-        step_indices = np.minimum(step_indices, self.trajectory_lengths[traj_idx] - 1)
-
+        step_indices = np.minimum(step_indices, self.trajectory_lengths[trajectory_index] - 1)
         assert key.startswith("video."), f"Video key must start with 'video.', got {key}"
-        subkey = key.replace("video.", "")
-        video_path = self.get_video_path(trajectory_id, subkey)
-
-        # Load raw timestamps from parquet
+        # Get the sub-key
+        key = key.replace("video.", "")
+        video_path = self.get_video_path(trajectory_id, key)
+        # Get the action/state timestamps for each frame in the video
         assert self.curr_traj_data is not None, f"No data found for {trajectory_id=}"
         assert "timestamp" in self.curr_traj_data.columns, f"No timestamp found in {trajectory_id=}"
-        ts = self.curr_traj_data["timestamp"].to_numpy()
-
-        # Ensure numeric array
-        ts = np.asarray(ts, dtype=np.float64)
-
-        # --- Infer units and normalize to seconds ---
-        # Try to get expected dt from metadata fps (fallback to None)
-        try:
-            fps = float(self.metadata.modalities.video[subkey]["fps"])
-            expected_dt = 1.0 / max(fps, 1e-6)
-        except Exception:
-            fps, expected_dt = None, None
-
-        # Compute a robust delta (ignore zeros)
-        if ts.size >= 2:
-            d = np.diff(ts)
-            d = d[d > 0]
-            med_dt_raw = float(np.median(d)) if d.size else None
-        else:
-            med_dt_raw = None
-
-        # Candidate unit scales to convert raw -> seconds
-        candidates = [1.0, 1e-3, 1e-6, 1e-9]  # raw in [s, ms, us, ns]
-        def score(scale: float) -> float:
-            if med_dt_raw is None:
-                # No deltas → prefer scales that keep values "reasonable"
-                # bias towards seconds then ms
-                return {1.0: 0, 1e-3: 1, 1e-6: 2, 1e-9: 3}[scale]
-            if expected_dt is None:
-                # No fps known → prefer dt in a sane range [1/300, 1/5]
-                dt = med_dt_raw * scale
-                # penalty: distance to that range
-                lo, hi = 1/300.0, 1/5.0
-                if lo <= dt <= hi:
-                    return abs(np.log(dt / np.sqrt(lo*hi)))  # center of the band
-                return min(abs(np.log(dt/lo)), abs(np.log(dt/hi)))
-            else:
-                dt = med_dt_raw * scale
-                return abs(np.log(max(dt, 1e-9) / expected_dt))
-
-        best_scale = min(candidates, key=score)
-        ts_sec = ts * best_scale
-
-        # If these look like absolute (epoch) seconds, shifting to 0 is safe anyway.
-        t0 = float(ts_sec[0])
-        ts_rel = ts_sec - t0
-
-        # Map selected frame timestamps
-        video_timestamp = ts_rel[step_indices].astype(np.float64)
-
-        # Optional: clamp to a safe range estimated from the trajectory
-        # (prevents tiny overshoots on the last frame)
-        if ts_rel.size >= 2:
-            # duration estimate from timestamps
-            dur_est = float(max(ts_rel[-1] - ts_rel[0], 0.0))
-            if dur_est > 0:
-                eps = 1e-6
-                video_timestamp = np.clip(video_timestamp, 0.0, max(dur_est - eps, 0.0))
+        timestamp: np.ndarray = self.curr_traj_data["timestamp"].to_numpy()
+        # Get the corresponding video timestamps from the step indices
+        video_timestamp = timestamp[step_indices]
 
         return get_frames_by_timestamps(
             video_path.as_posix(),
