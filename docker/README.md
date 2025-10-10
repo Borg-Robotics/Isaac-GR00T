@@ -10,3 +10,7 @@ The image can be created in two ways:
   docker compose -f docker/cloud_compose.yaml up --build
   ```
 
+Once the image is built or pulled, you can run the container with:
+```bash
+docker exec -it borg-isaac-gr00t bash
+```

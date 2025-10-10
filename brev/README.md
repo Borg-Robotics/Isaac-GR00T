@@ -1,5 +1,9 @@
 # Brev Setup
 
+![](img/brev_interface.png)
+
+Go to [https://brev.nvidia.com/](https://brev.nvidia.com/) -> Sign up / Log in.
+
 Create new instance -> Select GPU (A100) -> Select model (all similar) -> click VM Mode w/ Jupyter -> Custom Container -> Docker image: `pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel` -> Deploy -> Wait.
 
 ```shell
@@ -18,5 +22,5 @@ cd Isaac-GR00T
 
 Run the setup script:
 ```shell
-./bin/cloud_setup.bash
+./brev/cloud_setup.bash
 ```

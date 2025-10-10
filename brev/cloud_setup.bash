@@ -19,7 +19,7 @@ curl -L https://astral.sh/uv/install.sh | sh
 source $HOME/.local/bin/env
 uv python pin /opt/conda/bin/python
 
-uv venv --name gr00t
+uv venv .venv --prompt gr00t
 uv pip install setuptools wheel wheel-stub
 uv pip install psutil torch==2.5.1
 uv sync --extra base --extra dev --no-build-isolation --no-install-project

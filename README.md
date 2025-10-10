@@ -106,6 +106,16 @@ The focus is on enabling customization of robot behaviors through finetuning.
 
 ## Installation Guide
 
+### Docker
+
+See [docker/README.md](docker/README.md).
+
+### Brev Cloud Instance
+
+See [bin/README.md](bin/README.md).
+
+### Local Setup
+
 Clone the repo:
 
 ```sh
