@@ -26,4 +26,4 @@ uv sync --extra base --extra dev --no-build-isolation --no-install-project
 uv pip install -e . --no-deps
 
 source .venv/bin/activate
-export PYTHONPATH=/root/Isaac-GR00T:$PYTHONPATH
+export PYTHONPATH=/workspace/Isaac-GR00T:$PYTHONPATH

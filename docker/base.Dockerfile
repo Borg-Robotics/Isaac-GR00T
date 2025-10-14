@@ -24,14 +24,15 @@ EOT
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
+RUN mkdir /workspace
+WORKDIR /workspace
+
 COPY pyproject.toml .
 
 ENV UV_PROJECT_ENVIRONMENT=/opt/conda/
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,target=/workspace/.cache/uv \
     uv sync --extra base --extra dev --no-build-isolation --no-install-project
 
 COPY . .
 
 RUN uv pip install -e . --system --no-deps
-
-WORKDIR /workspace
