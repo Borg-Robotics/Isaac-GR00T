@@ -324,6 +324,66 @@ class UnitreeG1DataConfig(BaseDataConfig):
         ]
         return ComposedModalityTransform(transforms=transforms)
 
+class BorgNoHandsDataConfig(BaseDataConfig):
+    video_keys = ["video.cam_head"]
+    state_keys = [
+        "state.l_arm_pivot_1_joint",
+        "state.l_arm_pivot_2_joint",
+        "state.l_arm_pivot_3_joint",
+        "state.l_arm_pivot_4_joint",
+        "state.l_arm_pivot_5_joint",
+        "state.l_arm_pivot_6_joint",
+        "state.r_arm_pivot_1_joint",
+        "state.r_arm_pivot_2_joint",
+        "state.r_arm_pivot_3_joint",
+        "state.r_arm_pivot_4_joint",
+        "state.r_arm_pivot_5_joint",
+        "state.r_arm_pivot_6_joint",
+    ]
+    action_keys = [
+        "action.l_arm_pivot_1_joint",
+        "action.l_arm_pivot_2_joint",
+        "action.l_arm_pivot_3_joint",
+        "action.l_arm_pivot_4_joint",
+        "action.l_arm_pivot_5_joint",
+        "action.l_arm_pivot_6_joint",
+        "action.r_arm_pivot_1_joint",
+        "action.r_arm_pivot_2_joint",
+        "action.r_arm_pivot_3_joint",
+        "action.r_arm_pivot_4_joint",
+        "action.r_arm_pivot_5_joint",
+        "action.r_arm_pivot_6_joint",
+    ]
+    language_keys = ["annotation.human.action.task_description"]
+    observation_indices = [0]
+    action_indices = list(range(16))
+
+    def transform(self):
+        transforms = [
+            VideoToTensor(apply_to=self.video_keys),
+            VideoResize(apply_to=self.video_keys, height=224, width=224),
+            VideoToNumpy(apply_to=self.video_keys),
+            StateActionToTensor(apply_to=self.state_keys),
+            StateActionToTensor(apply_to=self.action_keys),
+            StateActionTransform(
+                apply_to=self.action_keys,
+                normalization_modes={key: "min_max" for key in self.action_keys},
+            ),
+            ConcatTransform(
+                video_concat_order=self.video_keys,
+                state_concat_order=self.state_keys,
+                action_concat_order=self.action_keys,
+            ),
+            GR00TTransform(
+                state_horizon=len(self.observation_indices),
+                action_horizon=len(self.action_indices),
+                max_state_dim=64,
+                max_action_dim=32,
+            ),
+        ]
+        return ComposedModalityTransform(transforms=transforms)
+    
+
 
 class UnitreeG1FullBodyDataConfig(UnitreeG1DataConfig):
     video_keys = ["video.rs_view"]
@@ -785,4 +845,5 @@ DATA_CONFIG_MAP = {
     "unitree_g1_full_body": UnitreeG1FullBodyDataConfig(),
     "oxe_droid": OxeDroidDataConfig(),
     "agibot_genie1": AgibotGenie1DataConfig(),
+    "borg_no_hands": BorgNoHandsDataConfig(),
 }

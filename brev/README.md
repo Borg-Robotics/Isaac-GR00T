@@ -22,3 +22,42 @@ Run the setup script:
 ```shell
 source ./brev/cloud_setup.bash
 ```
+
+Download the dataset with
+```shell
+uv pip install gdown
+apt update && apt install unzip
+gdown https://drive.google.com/uc?id=1GskDY-CmQOefoVxj9xVohgiJ3worHKqd -O box_pickup_dataset.zip
+unzip box_pickup_dataset.zip
+mv -p ./box_pickup_dataset ./data/box_pickup_dataset
+rm box_pickup_dataset.zip
+```
+
+Run the training with
+```shell
+python scripts/gr00t_finetune.py \
+    --dataset-path /workspace/Isaac-GR00T/data/box_pickup_dataset \
+    --num-gpus 1 \
+    --max-steps 500 \
+    --output-dir /tmp/gr00t-1/box-pickup-finetune \
+    --data-config borg_no_hands \
+    --embodiment-tag borg_no_hands
+```
+
+Run the server/client inference in two different terminals:
+```shell
+python scripts/inference_service.py \
+    --server \
+    --model-path /tmp/gr00t-1/box-pickup-finetune \
+    --embodiment-tag borg_no_hands \
+    --data-config borg_no_hands \
+    --port 5556
+```
+
+```shell
+python scripts/inference_service.py \
+    --client \
+    --embodiment-tag borg_no_hands \
+    --data-config borg_no_hands \
+    --port 5556
+```
