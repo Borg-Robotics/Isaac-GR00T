@@ -55,6 +55,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "gdown",
     "ipykernel",
     "ruff",
     "mypy>=1.0",

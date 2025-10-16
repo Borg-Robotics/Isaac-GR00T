@@ -21,6 +21,12 @@ apt-get install -qqy --no-install-recommends \
     tensorrt
 EOT
 
+RUN --mount=type=cache,target=/var/cache/apt <<EOT
+apt-get update
+apt-get install -qqy --no-install-recommends \
+    unzip
+EOT
+
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 COPY pyproject.toml .
@@ -28,7 +34,7 @@ COPY pyproject.toml .
 ENV UV_PROJECT_ENVIRONMENT=/opt/conda/
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv pip install --system setuptools wheel wheel-stub && \
-    uv sync --extra base --no-build-isolation --no-install-project
+    uv sync --extra base --extra dev --no-build-isolation --no-install-project
 
 COPY . .
 

@@ -4,11 +4,11 @@
 # docker exec -it borg-isaac-gr00t bash
 services:
   borg-isaac-gr00t:
-    image: borg-isaac-gr00t
+    image: borg-isaac-gr00t:dev
     container_name: borg-isaac-gr00t
     build:
       context: ../
-      dockerfile: docker/base.Dockerfile
+      dockerfile: docker/dev.Dockerfile
     runtime: nvidia
     network_mode: host
 

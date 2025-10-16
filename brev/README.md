@@ -4,37 +4,36 @@
 
 Go to [https://brev.nvidia.com/](https://brev.nvidia.com/) -> Sign up / Log in.
 
-Create new instance -> Select GPU (A100) -> Select model (all similar) -> click VM Mode w/ Jupyter -> Custom Container -> Docker image: `pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel` -> Deploy -> Wait.
+Create new instance -> Select GPU (A100) -> Select model (all similar) -> click VM Mode w/ Jupyter -> Custom Container -> Docker image: `davideborg/borg-isaac-gr00t:dev` -> Deploy -> Wait.
 
 Replace `awesome-gpu-name` with your instance name and run:
-```shell
+```bash
 brev shell awesome-gpu-name
 ```
 
 Clone the repo and enter it:
-```shell
+```bash
 cd /workspace
 git clone https://github.com/Borg-Robotics/Isaac-GR00T.git
 cd Isaac-GR00T
 ```
 
-Run the setup script:
-```shell
-source ./brev/cloud_setup.bash
-```
-
 Download the dataset with
-```shell
-uv pip install gdown
-apt update && apt install unzip
+```bash
 gdown https://drive.google.com/uc?id=1GskDY-CmQOefoVxj9xVohgiJ3worHKqd -O box_pickup_dataset.zip
 unzip box_pickup_dataset.zip
-mv -p ./box_pickup_dataset ./data/box_pickup_dataset
+mkdir -p ./data
+mv ./box_pickup_dataset ./data/box_pickup_dataset
 rm box_pickup_dataset.zip
 ```
 
+Load the dataset with
+```bash
+MPLBACKEND=Agg python3 scripts/load_dataset.py   --dataset-path /workspace/Isaac-GR00T/data/box_pickup_dataset
+```
+
 Run the training with
-```shell
+```bash
 python scripts/gr00t_finetune.py \
     --dataset-path /workspace/Isaac-GR00T/data/box_pickup_dataset \
     --num-gpus 1 \
@@ -45,7 +44,7 @@ python scripts/gr00t_finetune.py \
 ```
 
 Run the server/client inference in two different terminals:
-```shell
+```bash
 python scripts/inference_service.py \
     --server \
     --model-path /tmp/gr00t-1/box-pickup-finetune \
@@ -54,7 +53,7 @@ python scripts/inference_service.py \
     --port 5556
 ```
 
-```shell
+```bash
 python scripts/inference_service.py \
     --client \
     --embodiment-tag borg_no_hands \
