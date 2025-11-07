@@ -36,8 +36,10 @@ gdown --folder https://drive.google.com/drive/folders/1qDykMJSplterueCXxjLe13bdG
 # unzip box_pickup_dataset.zip
 mkdir -p ./data
 mv ./box_pickup_dataset ./data/box_pickup_dataset
+chown -R 1002 ./data
 # rm box_pickup_dataset.zip
 ```
+note that `chown` assumes the outside user id is 1002, change accordingly if it is not (check with `id -u` **outside** of Docker). You will have permissions errors in vscode otherwise.
 
 Load the dataset with
 ```bash
