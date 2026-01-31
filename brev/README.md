@@ -13,7 +13,7 @@ brev shell awesome-gpu-name
 
 Clone the repo and enter it:
 ```bash
-cd /workspace
+cd workspace
 git clone https://github.com/Borg-Robotics/Isaac-GR00T.git
 cd Isaac-GR00T
 ```

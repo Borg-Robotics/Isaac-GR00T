@@ -112,7 +112,7 @@ See [docker/README.md](docker/README.md).
 
 ### Brev Cloud Instance
 
-See [bin/README.md](bin/README.md).
+See [brev/README.md](brev/README.md).
 
 ### Local Setup
 
