@@ -18,11 +18,10 @@ git clone https://github.com/Borg-Robotics/Isaac-GR00T.git
 cd Isaac-GR00T
 ```
 
-Rebuild the docker image:
+Rebuild the docker image in detached mode (`-d`):
 ```bash
-docker compose -f docker/brev_compose.yaml up --build
+docker compose -f docker/brev_compose.yaml up --build -d
 ```
-Eventually, add the `-d` flag to run in detached mode.
 
 Enter it with:
 ```bash
