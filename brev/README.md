@@ -13,6 +13,7 @@ brev shell awesome-gpu-name
 
 Clone the repo and enter it:
 ```bash
+mkdir -p workspace
 cd workspace
 git clone https://github.com/Borg-Robotics/Isaac-GR00T.git
 cd Isaac-GR00T
@@ -73,3 +74,17 @@ python scripts/inference_service.py \
     --data-config borg_no_hands \
     --port 5556
 ```
+
+## VS Code Remote Development
+
+Open VS Code in the brev instance with (replace `awesome-gpu-name` with your instance name):
+```bash
+brev open awesome-gpu-name code
+```
+
+Install the Dev Containers extension in VS Code.
+
+- CTRL+SHIFT+P -> 
+- Search for `Dev Containers: Attach to Running Container` and select it -> 
+- Select the brev docker image (`brev-borg-isaac-gr00t` which starts once you run the docker compose command above) ->
+- Open the `/workspace` folder.
