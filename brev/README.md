@@ -31,13 +31,10 @@ docker exec -it brev-borg-isaac-gr00t bash
 
 Download the dataset with
 ```bash
-# gdown https://drive.google.com/uc?id=1GskDY-CmQOefoVxj9xVohgiJ3worHKqd -O box_pickup_dataset.zip
 gdown --folder https://drive.google.com/drive/folders/1qDykMJSplterueCXxjLe13bdGWcxw0HC
-# unzip box_pickup_dataset.zip
 mkdir -p ./data
 mv ./box_pickup_dataset ./data/box_pickup_dataset
 chown -R 1002 ./data
-# rm box_pickup_dataset.zip
 ```
 note that `chown` assumes the outside user id is 1002, change accordingly if it is not (check with `id -u` **outside** of Docker). You will have permissions errors in vscode otherwise.
 
@@ -73,6 +70,55 @@ python scripts/inference_service.py \
     --embodiment-tag borg_no_hands \
     --data-config borg_no_hands \
     --port 5556
+```
+This will tell you if everything is working correctly and the model is able to run inference.
+
+## Evaluate Fine-Tuned Model
+
+This replays an unseen test episode through the fine-tuned model and compares predicted actions against ground truth.
+
+Copy the test episode data (parquet + video) into the dataset folder:
+```bash
+cp /workspace/data/box_pickup_dataset/data/chunk-000/episode_000005.parquet /workspace/data/box_pickup_dataset/data/chunk-000/
+cp -r /workspace/data/box_pickup_dataset/videos/chunk-000/episode_000005 /workspace/data/box_pickup_dataset/videos/chunk-000/
+```
+
+Start the inference server (in one terminal):
+```bash
+python scripts/inference_server_2.py \
+    --model-path /tmp/gr00t-1/box-pickup-finetune \
+    --embodiment-tag borg_no_hands \
+    --data-config borg_no_hands \
+    --port 5556
+```
+
+Run the evaluation (in another terminal):
+```bash
+python scripts/evaluate_replay.py \
+    --dataset-path /workspace/data/box_pickup_dataset \
+    --episode-id 5 \
+    --port 5556
+```
+
+This outputs per-joint MAE metrics and saves a comparison plot.
+
+## Test Remote Connection (Local → Brev)
+
+This verifies ZMQ connectivity from a local machine to the Brev instance.
+
+On Brev (inside Docker), start the echo server:
+```bash
+python scripts/server_echo.py
+```
+
+On your local machine, forward local port 5557 to Brev port 5556 (replace `awesome-gpu-name2` with your instance name):
+```bash
+brev port-forward awesome-gpu-name2 -p 5557:5556
+```
+
+On your local machine, run the echo client:
+```bash
+python scripts/client_echo.py
 ```
 
 ## VS Code Remote Development

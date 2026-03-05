@@ -58,8 +58,8 @@ def flatten_action_dict(pred_action):
 
 def main(args):
     # ---- Load data ----
-    parquet_path = f"/workspace/Isaac-GR00T/data/box_pickup_dataset/data/chunk-000/episode_{args.episode_id}.parquet"
-    video_path = f"/workspace/Isaac-GR00T/data/box_pickup_dataset/videos/chunk-000/observation.images.cam_head/episode_{args.episode_id}.mp4"
+    parquet_path = f"/workspace/data/box_pickup_dataset/data/chunk-000/episode_{args.episode_id}.parquet"
+    video_path = f"/workspace/data/box_pickup_dataset/videos/chunk-000/observation.images.cam_head/episode_{args.episode_id}.mp4"
 
     df = pd.read_parquet(parquet_path)
     print(f"Loaded {len(df)} frames from parquet.")
@@ -142,7 +142,7 @@ def main(args):
         axes[j].grid(True)
 
     plt.tight_layout()
-    save_path = f"/workspace/Isaac-GR00T/data/replay_eval_{args.episode_id}.png"
+    save_path = f"/workspace/data/replay_eval_{args.episode_id}.png"
     plt.savefig(save_path)
     print(f"\n✅ Saved plot to {save_path}")
 
