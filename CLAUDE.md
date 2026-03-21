@@ -65,13 +65,13 @@ Defined in `gr00t/data/embodiment_tags.py` — each maps to a projector index in
 | `GR1` | 24 |
 | `OXE_DROID` | 17 |
 | `AGIBOT_GENIE1` | 26 |
-| `BORG_NO_HANDS` | 12 |
+| `BORG` | 31 |
 | `NEW_EMBODIMENT` | 31 |
 
 ## Data Configs
 
 Built-in configs in `gr00t/experiment/data_config.py` (`DATA_CONFIG_MAP`):
-`fourier_gr1_arms_waist`, `fourier_gr1_arms_only`, `fourier_gr1_full_upper_body`, `bimanual_panda_gripper`, `bimanual_panda_hand`, `single_panda_gripper`, `so100`, `so100_dualcam`, `unitree_g1`, `unitree_g1_full_body`, `oxe_droid`, `agibot_genie1`, `borg_no_hands`
+`fourier_gr1_arms_waist`, `fourier_gr1_arms_only`, `fourier_gr1_full_upper_body`, `bimanual_panda_gripper`, `bimanual_panda_hand`, `single_panda_gripper`, `so100`, `so100_dualcam`, `unitree_g1`, `unitree_g1_full_body`, `oxe_droid`, `agibot_genie1`, `borg`
 
 External configs via `module:ClassName` format.
 

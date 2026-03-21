@@ -17,11 +17,11 @@ from enum import Enum
 
 
 class EmbodimentTag(Enum):
-    BORG_NO_HANDS = "borg_no_hands"
+    BORG = "borg"
     """
-    The Borg No Hands dataset.
+    The Borg dataset.
     """
-    
+
     GR1 = "gr1"
     """
     The GR1 dataset.
@@ -43,11 +43,10 @@ class EmbodimentTag(Enum):
     """
 
 
-# Embodiment tag string: to projector index in the Action Expert Module
 EMBODIMENT_TAG_MAPPING = {
     EmbodimentTag.NEW_EMBODIMENT.value: 31,
     EmbodimentTag.OXE_DROID.value: 17,
     EmbodimentTag.AGIBOT_GENIE1.value: 26,
     EmbodimentTag.GR1.value: 24,
-    EmbodimentTag.BORG_NO_HANDS.value: 12,
+    EmbodimentTag.BORG.value: 31,
 }

@@ -50,8 +50,8 @@ python scripts/gr00t_finetune.py \
     --num-gpus 1 \
     --max-steps 500 \
     --output-dir /tmp/gr00t-1/box-pickup-finetune \
-    --data-config borg_no_hands \
-    --embodiment-tag borg_no_hands
+    --data-config borg \
+    --embodiment-tag borg
 ```
 
 Run the server/client inference in two different terminals:
@@ -59,16 +59,16 @@ Run the server/client inference in two different terminals:
 python scripts/inference_service.py \
     --server \
     --model-path /tmp/gr00t-1/box-pickup-finetune \
-    --embodiment-tag borg_no_hands \
-    --data-config borg_no_hands \
+    --embodiment-tag borg \
+    --data-config borg \
     --port 5556
 ```
 
 ```bash
 python scripts/inference_service.py \
     --client \
-    --embodiment-tag borg_no_hands \
-    --data-config borg_no_hands \
+    --embodiment-tag borg \
+    --data-config borg \
     --port 5556
 ```
 This will tell you if everything is working correctly and the model is able to run inference.
@@ -87,8 +87,8 @@ Start the inference server (in one terminal):
 ```bash
 python scripts/inference_server_2.py \
     --model-path /tmp/gr00t-1/box-pickup-finetune \
-    --embodiment-tag borg_no_hands \
-    --data-config borg_no_hands \
+    --embodiment-tag borg \
+    --data-config borg \
     --port 5556
 ```
 

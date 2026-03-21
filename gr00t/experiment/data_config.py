@@ -323,9 +323,14 @@ class UnitreeG1DataConfig(BaseDataConfig):
             ),
         ]
         return ComposedModalityTransform(transforms=transforms)
+    
 
-class BorgNoHandsDataConfig(BaseDataConfig):
-    video_keys = ["video.cam_head"]
+class BorgDataConfig(BaseDataConfig):
+    video_keys = [
+        "video.cam_head",
+        "video.cam_left_wrist",
+        "video.cam_right_wrist",
+    ]
     state_keys = [
         "state.l_arm_pivot_1_joint",
         "state.l_arm_pivot_2_joint",
@@ -333,12 +338,16 @@ class BorgNoHandsDataConfig(BaseDataConfig):
         "state.l_arm_pivot_4_joint",
         "state.l_arm_pivot_5_joint",
         "state.l_arm_pivot_6_joint",
+        "state.l_gripper_position",
+        "state.l_gripper_contact",
         "state.r_arm_pivot_1_joint",
         "state.r_arm_pivot_2_joint",
         "state.r_arm_pivot_3_joint",
         "state.r_arm_pivot_4_joint",
         "state.r_arm_pivot_5_joint",
         "state.r_arm_pivot_6_joint",
+        "state.r_gripper_position",
+        "state.r_gripper_contact",
     ]
     action_keys = [
         "action.l_arm_pivot_1_joint",
@@ -347,47 +356,39 @@ class BorgNoHandsDataConfig(BaseDataConfig):
         "action.l_arm_pivot_4_joint",
         "action.l_arm_pivot_5_joint",
         "action.l_arm_pivot_6_joint",
+        "action.l_gripper_position",
         "action.r_arm_pivot_1_joint",
         "action.r_arm_pivot_2_joint",
         "action.r_arm_pivot_3_joint",
         "action.r_arm_pivot_4_joint",
         "action.r_arm_pivot_5_joint",
         "action.r_arm_pivot_6_joint",
+        "action.r_gripper_position",
     ]
     language_keys = ["annotation.human.action.task_description"]
     observation_indices = [0]
     action_indices = list(range(16))
 
-    def transform(self) -> ModalityTransform:
+    def transform(self):
         transforms = [
-            # video transforms
             VideoToTensor(apply_to=self.video_keys),
-            VideoCrop(apply_to=self.video_keys, scale=0.95),
-            VideoResize(apply_to=self.video_keys, height=224, width=224, interpolation="linear"),
-            VideoColorJitter(
-                apply_to=self.video_keys,
-                brightness=0.3,
-                contrast=0.4,
-                saturation=0.5,
-                hue=0.08,
-            ),
+            VideoResize(apply_to=self.video_keys, height=224, width=224),
             VideoToNumpy(apply_to=self.video_keys),
-            # state transforms
             StateActionToTensor(apply_to=self.state_keys),
-            StateActionSinCosTransform(apply_to=self.state_keys),
-            # action transforms
+            StateActionTransform(
+                apply_to=self.state_keys,
+                normalization_modes={key: "min_max" for key in self.state_keys},
+            ),
             StateActionToTensor(apply_to=self.action_keys),
             StateActionTransform(
                 apply_to=self.action_keys,
                 normalization_modes={key: "min_max" for key in self.action_keys},
             ),
-            # concat transforms
             ConcatTransform(
                 video_concat_order=self.video_keys,
                 state_concat_order=self.state_keys,
                 action_concat_order=self.action_keys,
             ),
-            # model-specific transform
             GR00TTransform(
                 state_horizon=len(self.observation_indices),
                 action_horizon=len(self.action_indices),
@@ -396,8 +397,6 @@ class BorgNoHandsDataConfig(BaseDataConfig):
             ),
         ]
         return ComposedModalityTransform(transforms=transforms)
-
-    
 
 
 class UnitreeG1FullBodyDataConfig(UnitreeG1DataConfig):
@@ -860,5 +859,5 @@ DATA_CONFIG_MAP = {
     "unitree_g1_full_body": UnitreeG1FullBodyDataConfig(),
     "oxe_droid": OxeDroidDataConfig(),
     "agibot_genie1": AgibotGenie1DataConfig(),
-    "borg_no_hands": BorgNoHandsDataConfig(),
+    "borg": BorgDataConfig(),
 }
