@@ -143,28 +143,31 @@ class Gr00tPolicy(BasePolicy):
         """
         return self._modality_transform.unapply(action)
 
-    def get_action(self, observations: Dict[str, Any]) -> Dict[str, Any]:
+    def get_action(
+        self, observations: Dict[str, Any], config: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """
         Make a prediction with the model.
         Args:
-            obs (Dict[str, Any]): The observation to make a prediction for.
-
-        e.g. obs = {
-            "video.<>": np.ndarray,  # (T, H, W, C)
-            "state.<>": np.ndarray, # (T, D)
-            "annotation.<>": np.ndarray, # (T, )
-        }
-
-        or with batched input:
-        e.g. obs = {
-            "video.<>": np.ndarray,, # (B, T, H, W, C)
-            "state.<>": np.ndarray, # (B, T, D)
-            "annotation.<>": np.ndarray, # (B, T, )
-        }
+            observations (Dict[str, Any]): The observation to make a prediction for.
+            config (Dict[str, Any], optional): Per-request inference config.
+                Supported keys: ``denoising_steps``, ``rtc_overlap_steps``,
+                ``rtc_frozen_steps``.
 
         Returns:
             Dict[str, Any]: The predicted action.
         """
+        # Apply per-request RTC / denoising config before inference
+        if config is not None:
+            if "denoising_steps" in config:
+                self.model.action_head.num_inference_timesteps = config["denoising_steps"]
+            self.model.action_head.config.inference_rtc_overlap_steps = config.get(
+                "rtc_overlap_steps"
+            )
+            self.model.action_head.config.inference_rtc_frozen_steps = config.get(
+                "rtc_frozen_steps"
+            )
+
         # Create a copy to avoid mutating input
         obs_copy = observations.copy()
 

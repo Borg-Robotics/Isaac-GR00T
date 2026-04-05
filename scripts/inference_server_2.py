@@ -58,6 +58,11 @@ def decode_observation(obs):
         "annotation.human.action.task_description", ["pick up the box"]
     )
 
+    # --- PREVIOUS ACTIONS (for RTC) ---
+    for key in obs:
+        if key.startswith("action."):
+            decoded[key] = np.array(obs[key], dtype=np.float32)
+
     return decoded
 
 
@@ -131,11 +136,12 @@ def main(args: ArgsConfig):
                     socket.send_json({"error": "No 'data' field in request"})
                     continue
 
-                # ✅ Decode observation (video + state)
+                # ✅ Decode observation (video + state + optional previous actions)
                 obs = decode_observation(request["data"])
 
-                # ✅ Run policy inference
-                actions = policy.get_action(obs)
+                # ✅ Run policy inference (with optional per-request RTC config)
+                config = request.get("config", None)
+                actions = policy.get_action(obs, config=config)
 
                 # ✅ Convert all outputs to JSON-safe format
                 try:

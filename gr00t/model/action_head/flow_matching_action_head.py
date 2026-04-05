@@ -156,6 +156,17 @@ class FlowmatchingActionHeadConfig(PretrainedConfig):
         default=32, metadata={"help": "Number of target vision tokens."}
     )
 
+    # --- RTC (Real-Time Chunking) ---
+    inference_rtc_overlap_steps: int = field(
+        default=None, metadata={"help": "Number of previous action steps to condition on for RTC."}
+    )
+    inference_rtc_frozen_steps: int = field(
+        default=None, metadata={"help": "Number of fully frozen steps (no velocity update) for RTC."}
+    )
+    rtc_ramp_rate: float = field(
+        default=6.0, metadata={"help": "Exponential ramp rate for RTC soft overlap."}
+    )
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         for key, value in kwargs.items():
@@ -370,6 +381,35 @@ class FlowmatchingActionHead(nn.Module):
             device=device,
         )
 
+        # RTC: initialize overlap region with previous prediction
+        use_rtc = False
+        if self.config.inference_rtc_overlap_steps is not None:
+            if "action" not in action_input.keys():
+                print("WARNING: action.* mandatory for RTC, skipping RTC conditioning")
+            else:
+                overlap = self.config.inference_rtc_overlap_steps
+                actions[:, :overlap, :] = action_input["action"][:, -overlap:, :]
+                use_rtc = True
+
+        # Build velocity strength mask for RTC
+        vel_strength = torch.ones_like(actions)
+        if use_rtc:
+            frozen = self.config.inference_rtc_frozen_steps or 0
+            overlap = self.config.inference_rtc_overlap_steps
+            # Frozen steps: no velocity update
+            if frozen > 0:
+                vel_strength[:, :frozen, :] = 0.0
+            # Intermediate steps: exponential ramp 0->1
+            n_intermed = overlap - frozen
+            if n_intermed > 0:
+                t_ramp = torch.linspace(0.0, 1.0, n_intermed + 2, device=device)
+                ramp = 1.0 - torch.exp(-self.config.rtc_ramp_rate * t_ramp)
+                ramp = ramp / ramp[-1].clamp(min=1e-8)
+                ramp = ramp[1:-1]  # exclude endpoints
+                vel_strength[:, frozen:overlap, :] = ramp[None, :, None].to(
+                    dtype=vel_strength.dtype
+                )
+
         num_steps = self.num_inference_timesteps
         dt = 1.0 / num_steps
 
@@ -403,8 +443,8 @@ class FlowmatchingActionHead(nn.Module):
 
             pred_velocity = pred[:, -self.action_horizon :]
 
-            # Update actions using euler integration.
-            actions = actions + dt * pred_velocity
+            # Update actions using euler integration (vel_strength modulates RTC overlap).
+            actions = actions + dt * pred_velocity * vel_strength
         return BatchFeature(data={"action_pred": actions})
 
     @property
