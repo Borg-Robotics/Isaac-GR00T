@@ -167,6 +167,8 @@ class Gr00tPolicy(BasePolicy):
             self.model.action_head.config.inference_rtc_frozen_steps = config.get(
                 "rtc_frozen_steps"
             )
+            if "rtc_ramp_rate" in config:
+                self.model.action_head.config.rtc_ramp_rate = config["rtc_ramp_rate"]
 
         # Create a copy to avoid mutating input
         obs_copy = observations.copy()

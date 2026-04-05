@@ -17,41 +17,55 @@ from gr00t.model.policy import Gr00tPolicy
 # ==============================================================
 # 🔧 Helper: Decode the incoming observation from base64 + JSON
 # ==============================================================
+def _decode_camera(obs, key, decoded):
+    """Decode a single base64-encoded camera frame into decoded[key]."""
+    if key in obs:
+        try:
+            frame_bytes = base64.b64decode(obs[key])
+            frame_array = np.frombuffer(frame_bytes, np.uint8)
+            frame = cv2.imdecode(frame_array, cv2.IMREAD_COLOR)
+            decoded[key] = np.expand_dims(frame, axis=0)
+        except Exception as e:
+            print(f"⚠️ Failed to decode {key}: {e}")
+            decoded[key] = np.zeros((1, 720, 1280, 3), dtype=np.uint8)
+    else:
+        decoded[key] = np.zeros((1, 720, 1280, 3), dtype=np.uint8)
+
+
 def decode_observation(obs):
     """Decode base64-encoded video and expand joint states for GR00T inference."""
     decoded = {}
 
-    # --- VIDEO ---
-    if "video.cam_head" in obs:
-        frame_b64 = obs["video.cam_head"]
-        try:
-            frame_bytes = base64.b64decode(frame_b64)
-            frame_array = np.frombuffer(frame_bytes, np.uint8)
-            frame = cv2.imdecode(frame_array, cv2.IMREAD_COLOR)
-            # ✅ Keep original resolution (GR00T will handle resizing internally)
-            decoded["video.cam_head"] = np.expand_dims(frame, axis=0)
-        except Exception as e:
-            print(f"⚠️ Failed to decode video.cam_head: {e}")
-            decoded["video.cam_head"] = np.zeros((1, 720, 1280, 3), dtype=np.uint8)
-    else:
-        decoded["video.cam_head"] = np.zeros((1, 720, 1280, 3), dtype=np.uint8)
+    # --- VIDEO (all 3 cameras required by BorgDataConfig.video_keys) ---
+    _decode_camera(obs, "video.cam_head", decoded)
+    _decode_camera(obs, "video.cam_left_wrist", decoded)
+    _decode_camera(obs, "video.cam_right_wrist", decoded)
 
-    # --- STATE ---
+    # --- STATE (16-dim, matches BorgDataConfig.state_keys) ---
+    # Layout: [l_arm(6), l_grip, l_contact, r_arm(6), r_grip, r_contact]
     if "observation.state" in obs:
         state = np.array(obs["observation.state"], dtype=np.float32)
-        if len(state) != 12:
-            print(f"⚠️ Warning: Expected 12 joint state values, got {len(state)}")
+        if len(state) != 16:
+            print(f"⚠️ Warning: Expected 16 joint state values, got {len(state)}")
 
         for i in range(6):
             decoded[f"state.l_arm_pivot_{i+1}_joint"] = state[i:i+1].reshape(1, 1)
+        decoded["state.l_gripper_position"] = state[6:7].reshape(1, 1)
+        decoded["state.l_gripper_contact"] = state[7:8].reshape(1, 1)
         for i in range(6):
-            decoded[f"state.r_arm_pivot_{i+1}_joint"] = state[6+i:6+i+1].reshape(1, 1)
+            decoded[f"state.r_arm_pivot_{i+1}_joint"] = state[8+i:8+i+1].reshape(1, 1)
+        decoded["state.r_gripper_position"] = state[14:15].reshape(1, 1)
+        decoded["state.r_gripper_contact"] = state[15:16].reshape(1, 1)
     else:
         print("⚠️ Missing observation.state, filling zeros.")
         for i in range(6):
             decoded[f"state.l_arm_pivot_{i+1}_joint"] = np.zeros((1, 1), dtype=np.float32)
+        decoded["state.l_gripper_position"] = np.zeros((1, 1), dtype=np.float32)
+        decoded["state.l_gripper_contact"] = np.zeros((1, 1), dtype=np.float32)
         for i in range(6):
             decoded[f"state.r_arm_pivot_{i+1}_joint"] = np.zeros((1, 1), dtype=np.float32)
+        decoded["state.r_gripper_position"] = np.zeros((1, 1), dtype=np.float32)
+        decoded["state.r_gripper_contact"] = np.zeros((1, 1), dtype=np.float32)
 
     # --- LANGUAGE ---
     decoded["annotation.human.action.task_description"] = obs.get(
@@ -164,7 +178,7 @@ def main(args: ArgsConfig):
     elif args.client:
         obs = {
             "video.cam_head": np.random.randint(0, 256, (720, 1280, 3), dtype=np.uint8).tolist(),
-            "observation.state": np.random.rand(12).tolist(),
+            "observation.state": np.random.rand(16).tolist(),
             "annotation.human.action.task_description": ["pick up the box from the roller table"],
         }
 
